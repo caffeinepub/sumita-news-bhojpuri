@@ -89,7 +89,7 @@ export function useCreateArticle() {
       title,
       content,
       excerpt,
-      imageId,
+      image,
       category,
       author,
     }: {
@@ -97,12 +97,12 @@ export function useCreateArticle() {
       title: string;
       content: string;
       excerpt: string;
-      imageId: ExternalBlob | null;
+      image: ExternalBlob | null;
       category: Category;
       author: AuthorInfo;
     }) => {
       if (!actor) throw new Error("Actor not initialized");
-      return actor.createArticle(id, title, content, excerpt, imageId as any, category, author);
+      return actor.createArticle(id, title, content, excerpt, image as any, category, author);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["articles"] });
@@ -120,7 +120,7 @@ export function useUpdateArticle() {
       title,
       content,
       excerpt,
-      imageId,
+      image,
       category,
       author,
     }: {
@@ -128,12 +128,12 @@ export function useUpdateArticle() {
       title: string;
       content: string;
       excerpt: string;
-      imageId: ExternalBlob | null;
+      image: ExternalBlob | null;
       category: Category;
       author: AuthorInfo;
     }) => {
       if (!actor) throw new Error("Actor not initialized");
-      return actor.updateArticle(id, title, content, excerpt, imageId as any, category, author);
+      return actor.updateArticle(id, title, content, excerpt, image as any, category, author);
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["articles"] });

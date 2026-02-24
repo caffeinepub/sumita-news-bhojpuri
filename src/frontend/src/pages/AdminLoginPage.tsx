@@ -5,19 +5,17 @@ import { Footer } from "../components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import { useIsCallerAdmin } from "../hooks/useQueries";
 import { Loader2, LogIn } from "lucide-react";
 
 export function AdminLoginPage() {
   const navigate = useNavigate();
   const { login, loginStatus, isLoggingIn } = useInternetIdentity();
-  const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
 
   useEffect(() => {
-    if (loginStatus === "success" && isAdmin) {
+    if (loginStatus === "success") {
       navigate({ to: "/admin" });
     }
-  }, [loginStatus, isAdmin, navigate]);
+  }, [loginStatus, navigate]);
 
   const handleLogin = async () => {
     await login();
@@ -38,35 +36,27 @@ export function AdminLoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {checkingAdmin ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <>
-                <Button
-                  onClick={handleLogin}
-                  disabled={isLoggingIn}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isLoggingIn ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      लॉगिन हो रहा है...
-                    </>
-                  ) : (
-                    <>
-                      <LogIn className="mr-2 h-5 w-5" />
-                      लॉगिन करें
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  केवल अधिकृत एडमिन ही लॉगिन कर सकते हैं
-                </p>
-              </>
-            )}
+            <Button
+              onClick={handleLogin}
+              disabled={isLoggingIn}
+              className="w-full"
+              size="lg"
+            >
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  लॉगिन हो रहा है...
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-5 w-5" />
+                  लॉगिन करें
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              पहले यूजर ऑटोमैटिक एडमिन बन जाएंगे
+            </p>
           </CardContent>
         </Card>
       </main>

@@ -72,9 +72,9 @@ export function AdminArticleForm() {
       setAuthorName(existingArticle.author.name);
       setAuthorEmail(existingArticle.author.email);
       
-      if (existingArticle.imageId) {
-        setExistingImageBlob(existingArticle.imageId);
-        setImagePreview(existingArticle.imageId.getDirectURL());
+      if (existingArticle.image) {
+        setExistingImageBlob(existingArticle.image);
+        setImagePreview(existingArticle.image.getDirectURL());
       }
     }
   }, [isEditMode, existingArticle]);
@@ -124,7 +124,7 @@ export function AdminArticleForm() {
         title,
         content,
         excerpt,
-        imageId: imageBlob,
+        image: imageBlob,
         category: category as Category,
         author: {
           name: authorName,

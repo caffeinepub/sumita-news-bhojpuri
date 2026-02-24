@@ -24,9 +24,10 @@ export interface NewsArticle {
   'author' : AuthorInfo,
   'excerpt' : string,
   'category' : Category,
-  'imageId' : [] | [ExternalBlob],
+  'image' : [] | [ExternalBlob],
 }
 export type Time = bigint;
+export interface UserProfile { 'name' : string, 'email' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -67,10 +68,13 @@ export interface _SERVICE {
   'getAllArticles' : ActorMethod<[bigint, bigint], Array<NewsArticle>>,
   'getArticleById' : ActorMethod<[string], NewsArticle>,
   'getArticlesByCategory' : ActorMethod<[Category], Array<NewsArticle>>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getCategories' : ActorMethod<[], Array<string>>,
   'getCategoriesInHindi' : ActorMethod<[], Array<[string, string]>>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'updateArticle' : ActorMethod<
     [string, string, string, string, [] | [ExternalBlob], Category, AuthorInfo],
     undefined

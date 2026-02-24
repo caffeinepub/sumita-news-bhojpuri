@@ -41,7 +41,11 @@ export const NewsArticle = IDL.Record({
   'author' : AuthorInfo,
   'excerpt' : IDL.Text,
   'category' : Category,
-  'imageId' : IDL.Opt(ExternalBlob),
+  'image' : IDL.Opt(ExternalBlob),
+});
+export const UserProfile = IDL.Record({
+  'name' : IDL.Text,
+  'email' : IDL.Text,
 });
 
 export const idlService = IDL.Service({
@@ -98,6 +102,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(NewsArticle)],
       ['query'],
     ),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getCategories' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
   'getCategoriesInHindi' : IDL.Func(
@@ -105,7 +110,13 @@ export const idlService = IDL.Service({
       [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))],
       ['query'],
     ),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(UserProfile)],
+      ['query'],
+    ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'updateArticle' : IDL.Func(
       [
         IDL.Text,
@@ -157,8 +168,9 @@ export const idlFactory = ({ IDL }) => {
     'author' : AuthorInfo,
     'excerpt' : IDL.Text,
     'category' : Category,
-    'imageId' : IDL.Opt(ExternalBlob),
+    'image' : IDL.Opt(ExternalBlob),
   });
+  const UserProfile = IDL.Record({ 'name' : IDL.Text, 'email' : IDL.Text });
   
   return IDL.Service({
     '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -214,6 +226,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(NewsArticle)],
         ['query'],
       ),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getCategories' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'getCategoriesInHindi' : IDL.Func(
@@ -221,7 +234,13 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))],
         ['query'],
       ),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'updateArticle' : IDL.Func(
         [
           IDL.Text,

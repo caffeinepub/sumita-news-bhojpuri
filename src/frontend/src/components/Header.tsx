@@ -37,15 +37,30 @@ export function Header() {
           </Button>
 
           {isAdmin && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate({ to: "/admin" })}
-              title="एडमिन पैनल"
-            >
-              <Settings className="h-5 w-5" />
-              <span className="sr-only">एडमिन पैनल</span>
-            </Button>
+            <>
+              {/* Desktop Admin Button - Full text */}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => navigate({ to: "/admin" })}
+                className="hidden md:flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                एडमिन पैनल
+              </Button>
+              
+              {/* Mobile Admin Icon */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate({ to: "/admin" })}
+                title="एडमिन पैनल"
+                className="md:hidden"
+              >
+                <Settings className="h-5 w-5" />
+                <span className="sr-only">एडमिन पैनल</span>
+              </Button>
+            </>
           )}
 
           <DropdownMenu>

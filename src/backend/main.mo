@@ -1,13 +1,13 @@
-import Int "mo:core/Int";
+import Text "mo:core/Text";
 import Time "mo:core/Time";
-import Order "mo:core/Order";
+import Int "mo:core/Int";
+import Iter "mo:core/Iter";
+import Map "mo:core/Map";
 import List "mo:core/List";
 import Array "mo:core/Array";
-import Map "mo:core/Map";
-import Text "mo:core/Text";
-import Principal "mo:core/Principal";
-import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
+import Order "mo:core/Order";
+import Principal "mo:core/Principal";
 import Storage "blob-storage/Storage";
 import MixinStorage "blob-storage/Mixin";
 import MixinAuthorization "authorization/MixinAuthorization";
@@ -19,7 +19,37 @@ actor {
   include MixinAuthorization(accessControlState);
   include MixinStorage();
 
-  // Article category type and module
+  // User profile type
+  public type UserProfile = {
+    name : Text;
+    email : Text;
+  };
+
+  let userProfiles = Map.empty<Principal, UserProfile>();
+
+  // User profile management functions
+  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access profiles");
+    };
+    userProfiles.get(caller);
+  };
+
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    userProfiles.get(user);
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+    userProfiles.add(caller, profile);
+  };
+
+  // Article category type
   type Category = {
     #cinema;
     #viralNews;
@@ -28,6 +58,21 @@ actor {
   };
 
   module Category {
+    public func compare(a : Category, b : Category) : Order.Order {
+      switch (a, b) {
+        case (#cinema, #cinema) { #equal };
+        case (#cinema, _) { #less };
+        case (#viralNews, #cinema) { #greater };
+        case (#viralNews, #viralNews) { #equal };
+        case (#viralNews, _) { #less };
+        case (#politics, #interview) { #less };
+        case (#politics, #politics) { #equal };
+        case (#politics, _) { #greater };
+        case (#interview, #interview) { #equal };
+        case (_, _) { #greater };
+      };
+    };
+
     public func toText(category : Category) : Text {
       switch (category) {
         case (#cinema) { "भोजपुरी सिनेमा" };
@@ -49,17 +94,29 @@ actor {
   };
 
   // Article and author types
-  public type AuthorInfo = {
+  type AuthorInfo = {
     name : Text;
     email : Text;
   };
 
-  public type NewsArticle = {
+  type NewsArticle = {
     id : Text;
     title : Text;
     content : Text;
     excerpt : Text;
-    imageId : ?Storage.ExternalBlob;
+    image : ?Storage.ExternalBlob;
+    category : Category;
+    publishDate : Time.Time;
+    author : AuthorInfo;
+  };
+
+  // Internal article with validated image
+  type InternalArticle = {
+    id : Text;
+    title : Text;
+    content : Text;
+    excerpt : Text;
+    image : ?Storage.ExternalBlob;
     category : Category;
     publishDate : Time.Time;
     author : AuthorInfo;
@@ -71,17 +128,24 @@ actor {
     };
   };
 
-  // Map to store articles
-  let articlesMap = Map.empty<Text, NewsArticle>();
+  // State
+  let articles = Map.empty<Text, InternalArticle>();
 
-  // Core functionality
+  func validateImage(image : ?Storage.ExternalBlob) : ?Storage.ExternalBlob {
+    switch (image) {
+      case (?blob) { ?blob };
+      case (null) { null };
+    };
+  };
+
+  // Core functionality - Admin only operations
 
   public shared ({ caller }) func createArticle(
     id : Text,
     title : Text,
     content : Text,
     excerpt : Text,
-    imageId : ?Storage.ExternalBlob,
+    image : ?Storage.ExternalBlob,
     category : Category,
     author : AuthorInfo,
   ) : async () {
@@ -89,18 +153,18 @@ actor {
       Runtime.trap("Unauthorized: Only admins can create articles");
     };
 
-    let newArticle : NewsArticle = {
+    let newArticle : InternalArticle = {
       id;
       title;
       content;
       excerpt;
-      imageId;
+      image = validateImage(image);
       category;
       publishDate = Time.now();
       author;
     };
 
-    articlesMap.add(id, newArticle);
+    articles.add(id, newArticle);
   };
 
   public shared ({ caller }) func updateArticle(
@@ -108,7 +172,7 @@ actor {
     title : Text,
     content : Text,
     excerpt : Text,
-    imageId : ?Storage.ExternalBlob,
+    image : ?Storage.ExternalBlob,
     category : Category,
     author : AuthorInfo,
   ) : async () {
@@ -116,18 +180,18 @@ actor {
       Runtime.trap("Unauthorized: Only admins can update articles");
     };
 
-    let updatedArticle : NewsArticle = {
+    let updatedArticle : InternalArticle = {
       id;
       title;
       content;
       excerpt;
-      imageId;
+      image = validateImage(image);
       category;
       publishDate = Time.now();
       author;
     };
 
-    articlesMap.add(id, updatedArticle);
+    articles.add(id, updatedArticle);
   };
 
   public shared ({ caller }) func deleteArticle(id : Text) : async () {
@@ -135,56 +199,78 @@ actor {
       Runtime.trap("Unauthorized: Only admins can delete articles");
     };
 
-    switch (articlesMap.get(id)) {
+    switch (articles.get(id)) {
       case (null) { Runtime.trap("Article not found") };
-      case (?_) {
-        articlesMap.remove(id);
+      case (?_) { articles.remove(id) };
+    };
+  };
+
+  // Read operations - accessible to all users including guests (no authorization checks)
+
+  public query func getArticleById(id : Text) : async NewsArticle {
+    switch (articles.get(id)) {
+      case (null) { Runtime.trap("Article not found") };
+      case (?internal) {
+        {
+          internal with
+          image = internal.image;
+        };
       };
     };
   };
 
-  public query ({ caller }) func getAllArticles(page : Nat, pageSize : Nat) : async [NewsArticle] {
-    let sortedArticles = articlesMap.values().toArray();
-    let sortedByDate = sortedArticles.sort(NewsArticle.compareByDate);
+  public query func getAllArticles(page : Nat, pageSize : Nat) : async [NewsArticle] {
+    let sortedArticles = articles.values().toArray();
+    let sortedByDate = sortedArticles.sort(
+      func(a, b) { Int.compare(b.publishDate, a.publishDate) }
+    );
 
     let startIndex = page * pageSize;
     if (startIndex >= sortedByDate.size()) { return [] };
 
     let endIndex = Int.min(startIndex + pageSize, sortedByDate.size());
 
-    let list = List.empty<NewsArticle>();
+    let list = List.empty<InternalArticle>();
     var i = startIndex;
     while (i < endIndex) {
       list.add(sortedByDate[i]);
       i += 1;
     };
 
-    list.toArray();
+    list.toArray().map(func(a) { { a with image = a.image } });
   };
 
-  public query ({ caller }) func getArticleById(id : Text) : async NewsArticle {
-    switch (articlesMap.get(id)) {
-      case (null) { Runtime.trap("Article not found") };
-      case (?article) { article };
-    };
+  public query func getArticlesByCategory(category : Category) : async [NewsArticle] {
+    let filtered = List.empty<InternalArticle>();
+    let iter = articles.values();
+
+    iter.forEach(
+      func(article) {
+        if (article.category == category) {
+          filtered.add(article);
+        };
+      }
+    );
+
+    filtered.toArray().map(func(a) { { a with image = a.image } });
   };
 
-  public query ({ caller }) func getArticlesByCategory(category : Category) : async [NewsArticle] {
-    articlesMap.values().toArray().filter(
-      func(article) { article.category == category }
+  public query func getCategories() : async [Text] {
+    Array.tabulate<Text>(
+      4,
+      func(i) {
+        switch (i) {
+          case (0) { Category.toText(#cinema) };
+          case (1) { Category.toText(#viralNews) };
+          case (2) { Category.toText(#politics) };
+          case (3) { Category.toText(#interview) };
+          case (_) { "" };
+        };
+      },
     );
   };
 
-  public query ({ caller }) func getCategories() : async [Text] {
-    [
-      Category.toText(#cinema),
-      Category.toText(#viralNews),
-      Category.toText(#politics),
-      Category.toText(#interview),
-    ];
-  };
-
-  public query ({ caller }) func getCategoriesInHindi() : async [(Text, Text)] {
+  public query func getCategoriesInHindi() : async [(Text, Text)] {
     [
       ("cinema", "भोजपुरी सिनेमा"),
       ("viralNews", "वायरल खबर"),

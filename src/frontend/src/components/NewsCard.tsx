@@ -14,7 +14,7 @@ export function NewsCard({ article }: NewsCardProps) {
   const categoryColor = getCategoryColor(article.category);
   const categoryLabel = getCategoryLabel(article.category);
   
-  const imageUrl = article.imageId?.getDirectURL();
+  const imageUrl = article.image?.getDirectURL();
 
   const handleClick = () => {
     navigate({ to: `/article/${article.id}` });

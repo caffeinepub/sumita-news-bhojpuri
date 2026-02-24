@@ -68,7 +68,7 @@ export function ArticleDetailPage() {
 
   const categoryColor = getCategoryColor(article.category);
   const categoryLabel = getCategoryLabel(article.category);
-  const imageUrl = article.imageId?.getDirectURL();
+  const imageUrl = article.image?.getDirectURL();
 
   return (
     <div className="min-h-screen flex flex-col">

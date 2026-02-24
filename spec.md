@@ -2,112 +2,51 @@
 
 ## Current State
 
-This is a new project with no existing implementation. The workspace contains only the default Caffeine project structure.
+The application has an admin authentication system with the following characteristics:
+- Admin login uses Internet Identity authentication
+- Authorization logic requires the first user to provide a special admin token
+- Only pre-authorized admins can access admin features
+- Login page displays message "केवल अधिकृत एडमिन ही लॉगिन कर सकते हैं" (Only authorized admin can login)
+- After successful login, user is redirected to `/admin` dashboard
+- Backend access control requires admin permission to create/edit/delete articles
 
 ## Requested Changes (Diff)
 
 ### Add
-
-- **Backend News Management System**
-  - News article storage with fields: id, title, content, excerpt, image, category, publishDate, authorId
-  - Categories: भोजपुरी सिनेमा (Bhojpuri Cinema), वायरल खबर (Viral News), राजनीति (Politics), इंटरव्यू (Interview)
-  - CRUD operations for news articles (admin only)
-  - Public API to fetch all news articles
-  - Public API to fetch single article by ID
-  - Public API to filter articles by category
-
-- **Frontend Homepage**
-  - Grid layout displaying all published news articles
-  - Each news card shows: image, title, date, category
-  - Responsive mobile-friendly design
-  - Hindi typography and proper font rendering
-  - Category filter/navigation
-  - Click on card navigates to article detail page
-
-- **Frontend Article Detail Page**
-  - Dynamic routing using article ID (/article/[id])
-  - Fetch and display full article content
-  - Show article image, title, date, category, and full content
-  - Back navigation to homepage
-  - Hindi text rendering throughout
-
-- **Frontend Admin Panel**
-  - Protected admin route with authorization
-  - Form to create new articles with fields: title, content, excerpt, category, image upload
-  - List view of all articles with edit/delete actions
-  - Form to edit existing articles
-  - Image upload via blob storage
-
-- **Authorization System**
-  - Admin role for content management
-  - Login/logout functionality
-  - Protected admin routes
-
-- **Blob Storage**
-  - Image upload for news articles
-  - Image retrieval for display
+- Simplified admin assignment: first logged-in user automatically becomes admin
+- Email-based user profile collection during admin login
+- Auto-promotion logic to make the currently logged-in user an admin
 
 ### Modify
-
-None (new project)
+- Remove admin token requirement from access control initialization
+- Update AdminLoginPage to remove "only authorized admin" restriction message
+- Change login flow to always redirect to admin dashboard after authentication
+- Backend authorization to auto-assign admin role to first caller
+- Update access control logic to automatically assign admin to first authenticated user
 
 ### Remove
-
-None (new project)
+- Admin token validation requirement
+- "Only authorized admin" restriction message from login page
+- Admin token parameter from initialization function
 
 ## Implementation Plan
 
-1. **Select Caffeine Components**
-   - Authorization: for admin access control
-   - Blob Storage: for news article images
+1. **Backend Changes:**
+   - Modify `access-control.mo` to remove admin token parameter
+   - Update initialization logic to assign first caller as admin automatically
+   - Simplify admin assignment in MixinAuthorization
+   - Ensure authorization functions automatically grant admin to first user
 
-2. **Backend Development**
-   - Generate Motoko backend with:
-     - News article data structure with Hindi text support
-     - Four categories: भोजपुरी सिनेमा, वायरल खबर, राजनीति, इंटरव्यू
-     - Admin-only create/update/delete operations
-     - Public read operations (all articles, single article, filter by category)
-     - Integration with authorization and blob storage components
-
-3. **Frontend Development**
-   - Homepage component:
-     - Fetch and display all news articles
-     - Responsive grid layout
-     - News cards with image, title, date, category
-     - Category filter navigation
-     - Click handler to navigate to article detail
-   
-   - Article Detail page:
-     - Dynamic route setup (/article/[id])
-     - Fetch article by ID from backend
-     - Display full article content with proper Hindi rendering
-     - Handle loading and error states
-   
-   - Admin Panel:
-     - Login page with authorization
-     - Dashboard showing all articles
-     - Create article form with image upload
-     - Edit article form
-     - Delete functionality
-   
-   - Styling:
-     - Hindi font integration (Noto Sans Devanagari or similar)
-     - Mobile-first responsive design
-     - Clean, modern news website aesthetic
-     - Proper text direction and spacing for Hindi
-
-4. **Validation & Deployment**
-   - Type checking
-   - Build verification
-   - Deploy preview
+2. **Frontend Changes:**
+   - Update AdminLoginPage to remove "केवल अधिकृत एडमिन ही लॉगिन कर सकते हैं" message
+   - Simplify login flow to redirect directly to `/admin` after authentication
+   - Ensure user profile is collected (name/email) during admin setup
+   - Update any hooks that check admin status
 
 ## UX Notes
 
-- The website will be entirely in Hindi, providing an authentic experience for Hindi-speaking users interested in Bhojpuri culture and news
-- News cards on homepage provide quick scanning with image, title, and date
-- Category-based navigation helps users find content of interest
-- Article detail page provides immersive reading experience with full content
-- Admin panel is intuitive with clear forms for content management
-- Image uploads enhance visual appeal and engagement
-- Mobile-friendly design ensures accessibility across devices
-- Dynamic routing ensures proper URL structure and shareability (/article/[id])
+- First user to log in automatically becomes admin
+- No special tokens or pre-authorization needed
+- Login page should be welcoming, not restrictive
+- After login, immediate redirect to admin dashboard
+- Email collection happens seamlessly as part of user profile

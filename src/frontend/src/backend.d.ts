@@ -23,9 +23,13 @@ export interface NewsArticle {
     author: AuthorInfo;
     excerpt: string;
     category: Category;
-    imageId?: ExternalBlob;
+    image?: ExternalBlob;
 }
 export interface AuthorInfo {
+    name: string;
+    email: string;
+}
+export interface UserProfile {
     name: string;
     email: string;
 }
@@ -42,14 +46,17 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createArticle(id: string, title: string, content: string, excerpt: string, imageId: ExternalBlob | null, category: Category, author: AuthorInfo): Promise<void>;
+    createArticle(id: string, title: string, content: string, excerpt: string, image: ExternalBlob | null, category: Category, author: AuthorInfo): Promise<void>;
     deleteArticle(id: string): Promise<void>;
     getAllArticles(page: bigint, pageSize: bigint): Promise<Array<NewsArticle>>;
     getArticleById(id: string): Promise<NewsArticle>;
     getArticlesByCategory(category: Category): Promise<Array<NewsArticle>>;
+    getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCategories(): Promise<Array<string>>;
     getCategoriesInHindi(): Promise<Array<[string, string]>>;
+    getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
-    updateArticle(id: string, title: string, content: string, excerpt: string, imageId: ExternalBlob | null, category: Category, author: AuthorInfo): Promise<void>;
+    saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    updateArticle(id: string, title: string, content: string, excerpt: string, image: ExternalBlob | null, category: Category, author: AuthorInfo): Promise<void>;
 }
